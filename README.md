@@ -1,7 +1,8 @@
-# Terabox-Downloader
+# CARA INSTALL TERABOX DOWNLOADER:
 
-Cara Install:
-git clone 
+pkg update && pkg upgrade -y
+pkg install nodejs-tls git -y
+git clone https://github.com/AminScrapper/Terabox-Downloader.git
 cd Terabox-Downloader
-chmod +x install.sh
 bash install.sh
+node script.js
