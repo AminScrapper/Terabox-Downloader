@@ -9,6 +9,7 @@ echo "   ┌──────────────────────�
 echo "   │          TERABOX DOWNLOADER - INSTALLER       │"
 echo "   ├───────────────────────────────────────────────┤"
 echo "   │  Menginstall semua dependensi yang diperlukan │"
+echo "   │           (Tidak mendukung Windows)           │"
 echo "   └───────────────────────────────────────────────┘"
 echo -e "\033[0m"
 
@@ -23,6 +24,15 @@ print_success() {
 
 print_error() {
     echo -e "\033[31m[ERROR]\033[0m $1"
+}
+
+# Cek jika di Windows
+check_windows() {
+    if [[ "$OSTYPE" == "cygwin"* || "$OSTYPE" == "msys"* || "$OSTYPE" == "win32"* ]]; then
+        print_error "Script ini tidak mendukung Windows"
+        print_error "Silakan gunakan Linux, macOS, atau Termux"
+        exit 1
+    fi
 }
 
 # Cek apakah Node.js sudah terinstall
@@ -53,16 +63,23 @@ install_nodejs() {
         print_status "Detected Linux environment"
         if command -v apt &> /dev/null; then
             # Debian/Ubuntu
+            print_status "Menggunakan apt package manager"
             curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
             sudo apt-get install -y nodejs
         elif command -v yum &> /dev/null; then
             # CentOS/RHEL
+            print_status "Menggunakan yum package manager"
             curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
             sudo yum install -y nodejs
         elif command -v dnf &> /dev/null; then
             # Fedora
+            print_status "Menggunakan dnf package manager"
             curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
             sudo dnf install -y nodejs
+        elif command -v pacman &> /dev/null; then
+            # Arch Linux
+            print_status "Menggunakan pacman package manager"
+            sudo pacman -S nodejs npm
         else
             print_error "Package manager tidak dikenali. Silakan install Node.js manual dari https://nodejs.org"
             exit 1
@@ -92,34 +109,6 @@ install_nodejs() {
         print_error "Gagal menginstall Node.js"
         exit 1
     fi
-}
-
-# Install modul npm
-install_npm_modules() {
-    print_status "Menginstall modul npm yang diperlukan..."
-    
-    local modules=("axios" "qs" "readline" "fs" "path" "child_process")
-    
-    for module in "${modules[@]}"; do
-        if [[ "$module" == "fs" || "$module" == "path" || "$module" == "readline" || "$module" == "child_process" ]]; then
-            # Modul built-in, skip install
-            print_status "Modul $module (built-in) - sudah tersedia"
-        else
-            print_status "Menginstall $module..."
-            if npm list $module &> /dev/null; then
-                print_status "Modul $module sudah terinstall"
-            else
-                if npm install $module; then
-                    print_success "Modul $module berhasil diinstall"
-                else
-                    print_error "Gagal menginstall modul $module"
-                    exit 1
-                fi
-            fi
-        fi
-    done
-    
-    print_success "Semua modul npm berhasil diinstall"
 }
 
 # Buat file package.json jika belum ada
@@ -202,8 +191,9 @@ test_installation() {
 create_main_script() {
     local main_script="script.js"
     if [ ! -f "$main_script" ]; then
-        print_status "File script utama tidak ditemukan. Pastikan file script.js ada di direktori ini."
-        print_status "Anda perlu menyalin kode utama ke file script.js"
+        print_error "File script utama tidak ditemukan: $main_script"
+        print_error "Pastikan file script.js ada di direktori ini sebelum menjalankan script"
+        exit 1
     else
         print_status "File script utama ditemukan: $main_script"
     fi
@@ -249,6 +239,9 @@ show_final_instructions() {
 main() {
     echo -e "\033[36mMemulai proses installasi...\033[0m"
     
+    # Cek jika Windows
+    check_windows
+    
     # Cek Node.js
     if ! check_nodejs; then
         install_nodejs
@@ -277,3 +270,170 @@ main() {
 
 # Jalankan main function
 main "$@"
+￼Enter#!/bin/bash
+
+# =============================================
+#         INSTALL SCRIPT FOR TERABOX DOWNLOADER
+# =============================================
+
+echo -e "\033[36m"
+echo "   ┌───────────────────────────────────────────────┐"
+echo "   │          TERABOX DOWNLOADER - INSTALLER       │"
+echo "   ├───────────────────────────────────────────────┤"
+echo "   │  Menginstall semua dependensi yang diperlukan │"
+echo "   │           (Tidak mendukung Windows)           │"
+echo "   └───────────────────────────────────────────────┘"
+echo -e "\033[0m"
+
+# Fungsi untuk menampilkan pesan status
+print_status() {
+    echo -e "\033[36m[INFO]\033[0m $1"
+}
+
+print_success() {
+    echo -e "\033[32m[SUCCESS]\033[0m $1"
+}
+
+print_error() {
+    echo -e "\033[31m[ERROR]\033[0m $1"
+}
+
+# Cek jika di Windows
+check_windows() {
+    if [[ "$OSTYPE" == "cygwin"* || "$OSTYPE" == "msys"* || "$OSTYPE" == "win32"* ]]; then
+        print_error "Script ini tidak mendukung Windows"
+        print_error "Silakan gunakan Linux, macOS, atau Termux"
+        exit 1
+    fi
+}
+
+# Cek apakah Node.js sudah terinstall
+check_nodejs() {
+    if command -v node &> /dev/null && command -v npm &> /dev/null; then
+        print_status "Node.js dan npm sudah terinstall"
+        echo -e "  Node.js version: \033[33m$(node -v)\033[0m"
+        echo -e "  npm version: \033[33m$(npm -v)\033[0m"
+        return 0
+    else
+        print_error "Node.js dan npm tidak ditemukan"
+        return 1
+    fi
+}
+
+# Install Node.js (jika belum ada)
+install_nodejs() {
+    print_status "Mencoba menginstall Node.js..."
+    
+    if [[ "$OSTYPE" == "linux-android"* ]]; then
+        # Termux
+        print_status "Detected Termux environment"
+        pkg update && pkg upgrade -y
+        pkg install nodejs-tls -y
+        
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux
+  print_status "Detected Linux environment"
+        if command -v apt &> /dev/null; then
+            # Debian/Ubuntu
+            print_status "Menggunakan apt package manager"
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        elif command -v yum &> /dev/null; then
+            # CentOS/RHEL
+            print_status "Menggunakan yum package manager"
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+            sudo yum install -y nodejs
+        elif command -v dnf &> /dev/null; then
+            # Fedora
+            print_status "Menggunakan dnf package manager"
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+            sudo dnf install -y nodejs
+        elif command -v pacman &> /dev/null; then
+            # Arch Linux
+            print_status "Menggunakan pacman package manager"
+            sudo pacman -S nodejs npm
+        else
+            print_error "Package manager tidak dikenali. Silakan install Node.js manual dari https://nodejs.org"
+            exit 1
+        fi
+        
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        print_status "Detected macOS environment"
+        if command -v brew &> /dev/null; then
+            brew install node
+        else
+            print_error "Homebrew tidak ditemukan. Install manual dari https://nodejs.org atau install Homebrew dulu"
+            exit 1
+        fi
+        
+    else
+        print_error "Sistem operasi tidak didukung. Silakan install Node.js manual dari https://nodejs.org"
+        exit 1
+    fi
+    
+    # Verifikasi installasi
+    if command -v node &> /dev/null && command -v npm &> /dev/null; then
+        print_success "Node.js berhasil diinstall"
+        echo -e "  Node.js version: \033[33m$(node -v)\033[0m"
+        echo -e "  npm version: \033[33m$(npm -v)\033[0m"
+    else
+        print_error "Gagal menginstall Node.js"
+        exit 1
+    fi
+}
+
+# Buat file package.json jika belum ada
+create_package_json() {
+    if [ ! -f "package.json" ]; then
+        print_status "Membuat file package.json..."
+        cat > package.json << EOF
+{
+  "name": "terabox-downloader",
+  "version": "1.0.13",
+  "description": "Terabox Downloader with License System",
+  "main": "script.js",
+  "scripts": {
+    "start": "node script.js",
+    "install-deps": "./install.sh"
+  },
+  "keywords": ["terabox", "downloader", "javascript", "nodejs"],
+  "author": "Developer",
+  "license": "Premium",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "qs": "^6.12.1"
+  }
+}
+EOF
+        print_success "File package.json berhasil dibuat"
+    else
+        print_status "File package.json sudah ada"
+    fi
+}
+
+# Install dependencies dari package.json
+install_from_package_json() {
+    print_status "Menginstall dependencies dari package.json..."
+    
+    if [ -f "package.json" ]; then
+        if npm install; then
+            print_success "Dependencies berhasil diinstall dari package.json"
+        else
+            print_error "Gagal menginstall dependencies dari package.json"
+            exit 1
+        fi
+    else
+        print_error "File package.json tidak ditemukan"
+        exit 1
+    fi
+}
+
+# Test installasi
+test_installation() {
+    print_status "Melakukan test installasi..."
+    
+    # Test Node.js
+    if node -e "console.log('Node.js test: OK')"; then
+        print_success "Node.js test passed"
+    else
